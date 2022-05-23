@@ -1,0 +1,26 @@
+.avatar {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.MuiToolbar-root {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.MuiToolbar-root p {
+  margin: 0 !important;
+}
+
+.bg-success-light {
+  background-color: rgba(8, 143, 143, 0.07);
+}
+
+.bg-danger-light {
+  background-color: rgba(178, 39, 39, 0.07);
+}
+
+.bg-warning-light {
+  background-color: rgba(242, 234, 119, 0.2);
+}
