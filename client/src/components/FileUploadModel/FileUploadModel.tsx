@@ -10,15 +10,16 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import ExcelIcon from "../../assets/icons/sheets.png";
 import UploadIcon from "../../assets/icons/upload.png";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import api from "../../lib/axios.config";
 import { useSnackbar } from "notistack";
 import { socket } from "../../lib/socket";
 import { uploadFile } from "../../Repository/filehandle.api";
+import { createStudent } from "../../Repository/student.api";
 
 export default function FileUploadModel() {
   const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = React.useState(false);
   const [file, setFile] = React.useState<File[]>([]);
+  const [errors, setErrors] = React.useState([]);
   const [details, setDetails] = React.useState({
     name: "",
     email: "",
@@ -46,7 +47,15 @@ export default function FileUploadModel() {
     }
 
     const file = input.files[0];
-    console.log(file);
+    //validate file excel or csv
+    if (file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" && file.type !== "text/csv") {
+      return enqueueSnackbar("Please upload a valid file", { variant: "error" });
+    }
+    //validate file size
+    if (file.size > 10000000) {
+      enqueueSnackbar("File size should be less than 10MB", { variant: "error" });
+      return;
+    }
     setFile([file]);
   };
 
@@ -56,7 +65,12 @@ export default function FileUploadModel() {
 
   const handleUpload = () => {
     try {
-      enqueueSnackbar("Uploading : " + file[0].name, { variant: "info" });
+      //check file
+      if (file.length === 0) {
+        return enqueueSnackbar("Please upload a file", { variant: "error" });
+      }
+
+      enqueueSnackbar("Uploading : " + file[0].name, { variant: "default" });
       const formData = new FormData();
       formData.append("file", file[0]);
       formData.append("socketId", socket.id);
@@ -67,24 +81,46 @@ export default function FileUploadModel() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      e.preventDefault();
+      const formData = new FormData(e.target as HTMLFormElement);
+      const dob = new Date(formData.get("dob") as string);
+      formData.set("dob", dob.toISOString());
+      await createStudent(formData);
+      setErrors([]);
+      enqueueSnackbar("Student created successfully", { variant: "success" });
+      setTimeout(() => {
+        setOpen(false);
+      }, 2000);
+    } catch (e: any) {
+      console.log(e);
+      const { response } = e;
+      if (response && response.data) {
+        setErrors(response.data.message);
+      }
+      enqueueSnackbar("Something Went Wrong. Check Your Form", { variant: "error" });
+    }
+  };
+
   return (
     <div>
-      <button className="btn btn-white rounded-pill shadow-5 p-2" onClick={handleClickOpen}>
+      <button className="btn btn-dark rounded-pill shadow-5 p-2" onClick={handleClickOpen}>
         <i className="fas fa-plus"></i>
       </button>
       <Dialog open={open} onClose={handleClose} className="h-100">
         <DialogTitle>Add Student</DialogTitle>
-        <DialogContent className="w-100 h-100 d-flex gap-3">
-          <div style={{ width: "35ch" }}>
+        <DialogContent className="w-100 h-100 row m-0 p-0 p-md-2">
+          <div className="col-12 col-md-6 d-flex flex-column justify-content-between">
             <code className="text-muted fw-bold mb-2">Upload a Excel File</code>
             {file.length === 1 ? (
               <div className="d-flex">
-                <div className="align-items-center bg-light p-2 shadow-1 rounded-5">
+                <div className="align-items-center bg-light p-2 shadow-1 rounded-5 w-100">
                   <div className="d-flex justify-content-start">
                     <img src={ExcelIcon} alt="" className="img-fluid avatar" />
                   </div>
-                  <div className="mt-1 d-flex gap-2 align-items-center">
-                    <p className="text-muted m-0" style={{ width: "23ch" }}>
+                  <div className="mt-1 d-flex gap-2 align-items-center justify-content-between">
+                    <p className="text-muted m-0" style={{ maxWidth: "23ch" }}>
                       {file[0].name}
                     </p>
                     <button className="btn btn-danger p-2 px-3  rounded-pill shadow-0" onClick={() => removeFile()}>
@@ -95,28 +131,41 @@ export default function FileUploadModel() {
               </div>
             ) : (
               <div className="d-flex">
-                <label htmlFor="excel" className="align-items-center bg-light p-2 shadow-1 rounded-5">
+                <label htmlFor="excel" className="align-items-center bg-light p-2 shadow-1 rounded-5 w-100">
                   <div className="d-flex justify-content-start">
                     <img src={UploadIcon} alt="" className="img-fluid avatar" />
                   </div>
-                  <div className="mt-1">
-                    <p className="text-muted" style={{ width: "30ch" }}>
-                      Open Files
+                  <div className="my-2">
+                    <p className="text-muted m-0" style={{ maxWidth: "23ch" }}>
+                      Open File
                     </p>
                   </div>
                   <input id="excel" className="visually-hidden" accept=".xlsx, .csv" type="file" name="excel" onChange={(e) => onFileDrop(e)} />
                 </label>
               </div>
             )}
+            <div>
+              <button className="my-3 btn btn-dark shadow-0 btn-rounded" onClick={handleUpload}>
+                Upload
+              </button>
+            </div>
           </div>
-          <div style={{ width: "35ch" }}>
-            <code className="text-muted fw-bold py-5">or add a Student</code>
-            <div className="d-flex gap-2 bg-light p-2 rounded-5">
+          <form onSubmit={(e) => handleSubmit(e)} className="col-12 col-md-6 d-flex flex-column justify-content-between">
+            <code className="text-muted fw-bold mb-1">or add a Student</code>
+            {errors.length > 0 &&
+              errors.map((error: string, index: number) => (
+                <code style={{ fontSize: "12px" }} key={index} className="text-danger fw-bold">
+                  {error}
+                </code>
+              ))}
+            <div className="d-flex gap-2 bg-light p-2 rounded-5 mt-1">
               <div>
                 <TextField
                   size="small"
                   label="Name"
                   name="name"
+                  required
+                  inputMode="text"
                   variant="standard"
                   value={details.name}
                   className="w-100 border-0 mb-1"
@@ -126,6 +175,9 @@ export default function FileUploadModel() {
                   size="small"
                   label="Email"
                   name="email"
+                  required
+                  inputMode="email"
+                  inputProps={{ inputMode: "email", pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]{2,}$" }}
                   variant="standard"
                   value={details.email}
                   className="w-100 border-0 mb-2"
@@ -139,18 +191,20 @@ export default function FileUploadModel() {
                     }}
                     openTo="year"
                     views={["year", "month", "day"]}
-                    label="Year, month and date"
+                    label="Date of Birth"
                     className="mb-0"
-                    renderInput={(params) => <TextField variant="standard" className="w-100" size="small" {...params} helperText={null} />}
+                    renderInput={(params) => <TextField variant="standard" name="dob" className="w-100" size="small" {...params} helperText={null} />}
                   />
                 </LocalizationProvider>
               </div>
             </div>
-          </div>
+            <div>
+              <button className="my-3 btn btn-dark shadow-0 btn-rounded">Submit</button>
+            </div>
+          </form>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleUpload}>Upload</Button>
         </DialogActions>
       </Dialog>
     </div>

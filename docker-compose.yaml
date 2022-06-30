@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  client:
+    image: "client"
+    build: "./client"
+    container_name: clientkt
+    ports:
+      - 3000:3000
+  server:
+    image: "server"
+    build: "./server"
+    container_name: serverKt
+    ports:
+      - 3001:3001
+  database:
+    image: "mariadb"
+    container_name: mariadbkt
+    volumes:
+      - ~/apps/mariadb:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=students
+  redis:
+    image: "redis"
+    container_name: rediskt
+    ports:
+      - 6379:6379

@@ -1,10 +1,13 @@
+import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
 import * as React from "react";
-import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
+import { Student } from "../../lib/entity/student.entity";
+import { metaType, pageOptions } from "../../lib/types/page.types";
+import UpdateDialog from "../Dialog/UpdateDialog";
 
 const columns: GridColDef[] = [
-  { field: "id", headerName: "ID", width: 50 },
-  { field: "name", headerName: "Name", width: 130 },
-  { field: "email", headerName: "Email", width: 150 },
+  { field: "id", headerName: "ID", width: 100 },
+  { field: "name", headerName: "Name", width: 150 },
+  { field: "email", headerName: "Email", width: 170 },
   {
     field: "age",
     headerName: "Age",
@@ -16,52 +19,63 @@ const columns: GridColDef[] = [
     headerName: "Date of birth",
     type: "string",
     width: 130,
+    renderCell: (params: any) => {
+      //convert to date
+      const date = new Date(params.value);
+      return date.toLocaleDateString();
+    },
   },
   {
     field: "actions",
     headerName: "actions",
     width: 150,
     renderCell: (params) => (
-      <div className="d-flex gap-3 w-100 justify-content-between">
-        <button className="btn btn-light shadow-1 p-1 px-2 rounded-pill">
+      <div className="d-flex gap-3 w-100 justify-content-center">
+        <button className="btn btn-light shadow-1 p-1 px-4 rounded-pill">
           <i className="fas fa-pen"></i>
-        </button>
-        <button className="btn btn-danger shadow-1 p-1 px-2 rounded-pill">
-          <i className="fas fa-trash"></i>
         </button>
       </div>
     ),
   },
 ];
 
-const rows = [
-  { id: 1, lastName: "Snow", firstName: "Jon", age: 35, email: "sas" },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 42 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 45 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 16 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 6, lastName: "Melisandre", firstName: null, age: 150 },
-  { id: 7, lastName: "Clifford", firstName: "Ferrara", age: 44 },
-  { id: 8, lastName: "Frances", firstName: "Rossini", age: 36 },
-  { id: 9, lastName: "Roxie", firstName: "Harvey", age: 65 },
-];
+export default function DataTable({ rows, setPageOptions, pageOptions, meta }: { meta: metaType; rows: Student[]; setPageOptions: (options: pageOptions) => void; pageOptions: pageOptions }) {
+  const [data, setData] = React.useState<Student[]>(rows);
+  const [dialogData, setDialogData] = React.useState({ open: false, data: {} });
 
-export default function DataTable() {
+  const handleDialogOpen = (e: GridRowParams<any>) => {
+    setDialogData({ open: true, data: e.row });
+  };
+
+  const handleDialogClose = () => {
+    setDialogData({ open: false, data: {} });
+  };
+
+  React.useEffect(() => {
+    setData(rows);
+  }, [rows]);
+
   return (
     <div style={{ height: "75vh", width: "100%" }}>
       <DataGrid
-        rows={rows}
+        rows={data}
         columns={columns}
-        rowsPerPageOptions={[5, 10, 25]}
-        onSelectionModelChange={(ids) => {
-          const selectedIDs = new Set(ids);
-          const selectedRowData = rows.filter((row) => {
-            return selectedIDs.has(row.id);
-          });
-          console.log(selectedRowData);
-        }}
+        rowCount={meta.itemCount}
         pagination
+        paginationMode="server"
+        pageSize={parseInt(meta.limit.toString())}
+        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        onPageSizeChange={(e) => {
+          setPageOptions({ ...pageOptions, limit: e });
+        }}
+        onPageChange={(e) => {
+          setPageOptions({ ...pageOptions, page: e });
+        }}
+        onRowClick={(e) => {
+          handleDialogOpen(e);
+        }}
       />
+      {dialogData.open && <UpdateDialog data={dialogData.data} open={dialogData.open} handleClose={handleDialogClose} />}
     </div>
   );
 }

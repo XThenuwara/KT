@@ -1,20 +1,40 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseInterceptors,
+  UsePipes,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateStudentDto } from './dto/createStudent.dto';
+import { PageQueryDto } from './dto/pageQuery.dto';
+import { SearchQueryDto } from './dto/searchQuery.dto';
+import { UpdateStudentDto } from './dto/updateStudent.dto';
 import { StudentService } from './student.service';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
 
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('file'))
   create(@Body() createStudentDto: CreateStudentDto) {
     return this.studentService.create(createStudentDto);
   }
 
   @Get()
-  findAll() {
-    return this.studentService.findAll();
+  findAll(@Query() pageQuery: PageQueryDto) {
+    return this.studentService.findAll(pageQuery);
+  }
+
+  @Get('/search')
+  async search(@Query() query: SearchQueryDto) {
+    return this.studentService.search(query);
   }
 
   @Get(':id')

@@ -1,12 +1,10 @@
-import { Injectable, Logger, Req, Request } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
@@ -30,11 +28,6 @@ export class NotificationService
   handleConnection(@ConnectedSocket() client: Socket) {
     this.logger.log('connected : ' + client.id);
   }
-
-  // @Interval(2000)
-  // async sendNotification() {
-  //   this.server.emit('notify', 'test');
-  // }
 
   sendMessage(id, data) {
     this.server.to(id).emit('notify', data);

@@ -1,13 +1,13 @@
-import * as React from "react";
 import Box from "@mui/material/Box";
 import SwipeableDrawer from "@mui/material/SwipeableDrawer";
-import { useSelector } from "react-redux";
-import { RootState } from "../../lib/redux.store";
-import { useDispatch } from "react-redux";
-import { removeAllNotification, removeNotification } from "../../lib/features/notificationSlice";
-import { uploadFileRetry } from "../../Repository/filehandle.api";
-import { socket } from "../../lib/socket";
+import { AnimatePresence, motion } from "framer-motion";
+import * as React from "react";
 import { CSVLink } from "react-csv";
+import { useDispatch, useSelector } from "react-redux";
+import { removeAllNotification, removeNotification } from "../../lib/features/notificationSlice";
+import { RootState } from "../../lib/redux.store";
+import { socket } from "../../lib/socket";
+import { uploadFileRetry } from "../../Repository/filehandle.api";
 
 type Anchor = "top" | "left" | "bottom" | "right";
 
@@ -17,11 +17,13 @@ export default function NotificationSlide() {
     return state.notification;
   });
 
-  const handleRemove = (index: number) => {
+  const handleRemove = (id: number) => {
+    const index = notifications.findIndex((notification) => notification.id === id);
     dispatch(removeNotification(index));
   };
 
-  const handleRetry = (index: number) => {
+  const handleRetry = (id: number) => {
+    const index = notifications.findIndex((notification) => notification.id === id);
     dispatch(removeNotification(index));
     const formData = new FormData();
 
@@ -64,83 +66,105 @@ export default function NotificationSlide() {
             </i>
           </button>
         </h4>
-        <div className="d-flex flex-column gap-3">
-          {notifications.length > 0 ? (
-            notifications
-              .slice(0)
-              .reverse()
-              .map((notify, index) => {
-                switch (notify.variant) {
-                  case "error":
-                    return (
-                      <div key={index} className="d-flex bg-danger-light shadow-1 p-3 rounded-3 justify-content-between">
-                        <div>
-                          <h6>{notify.message}</h6>
-                          <p className="m-0">{notify.data.originalname}</p>
-                        </div>
-                        <div className="d-flex flex-column justify-content-between gap-2">
-                          <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill" onClick={() => handleRemove(index)}>
-                            <i className="fas fa-times"></i>
-                          </button>
-                          <button className="btn btn-danger px-3 p-1 rounded-pill shadow-0" onClick={(e) => handleRetry(index)}>
-                            <i className="fas fa-redo"></i>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  case "success":
-                    return (
-                      <div key={index} className="d-flex bg-success-light shadow-1 p-3 rounded-3 justify-content-between">
-                        <div>
-                          <h6>{notify.message}</h6>
-                          <p className="m-0">{notify.data.originalname}</p>
-                        </div>
-                        <div className="d-flex flex-column justify-content-between gap-2" onClick={() => handleRemove(index)}>
-                          <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill">
-                            <i className="fas fa-times"></i>
-                          </button>
-                          <button className="btn btn-success px-3 p-1 rounded-pill">
-                            <i className="fas fa-check"></i>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  case "warning":
-                    //create csvHeaders
-                    const csvHeaders = [
-                      { label: "name", key: "name" },
-                      { label: "email", key: "email" },
-                      { label: "dob", key: "dob" },
-                    ];
-                    return (
-                      <div key={index} className="d-flex bg-warning-light shadow-1 p-3 rounded-3 justify-content-between">
-                        <div>
-                          <h6>{notify.message}</h6>
-                          <p className="m-0">{notify.data.originalname}</p>
-                        </div>
-                        <div className="d-flex flex-column justify-content-between gap-2">
-                          <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill" onClick={() => handleRemove(index)}>
-                            <i className="fas fa-times"></i>
-                          </button>
-                          <CSVLink headers={csvHeaders} data={notify.data} filename="failed">
-                            <button className="btn btn-warning px-3 p-1 rounded-pill shadow-0">
-                              <i className="fas fa-angle-down"></i>
+
+        <motion.div layout exit={{ y: 300 }} initial={{ y: 200 }} animate={{ y: 0 }} transition={{ ease: "easeOut", duration: 0.6 }} className="d-flex flex-column gap-3">
+          <AnimatePresence initial={false}>
+            {notifications.length > 0 ? (
+              notifications
+                .slice(0)
+                .reverse()
+                .map((notify, index) => {
+                  switch (notify.variant) {
+                    case "error":
+                      return (
+                        <motion.div
+                          initial={{ x: 0 }}
+                          transition={{ ease: "easeOut", duration: 0.6 }}
+                          animate={{ x: 0 }}
+                          exit={{ x: 500 }}
+                          key={notify.id}
+                          className="d-flex bg-danger-light shadow-1 p-3 rounded-3 justify-content-between">
+                          <div>
+                            <h6>{notify.message}</h6>
+                            <p className="m-0">{notify.data.originalname}</p>
+                          </div>
+                          <div className="d-flex flex-column justify-content-between gap-2">
+                            <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill" onClick={() => handleRemove(notify.id)}>
+                              <i className="fas fa-times"></i>
                             </button>
-                          </CSVLink>
-                        </div>
-                      </div>
-                    );
-                }
-              })
-          ) : (
-            <div className="d-flex shadow-1 p-3 rounded-3 justify-content-between">
-              <h6 className="text-dark">No notifications</h6>
-            </div>
-          )}
-        </div>
+                            <button className="btn btn-danger px-3 p-1 rounded-pill shadow-0" onClick={(e) => handleRetry(notify.id)}>
+                              <i className="fas fa-redo"></i>
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    case "success":
+                      return (
+                        <motion.div
+                          initial={{ x: 0 }}
+                          transition={{ ease: "easeOut", duration: 0.6 }}
+                          animate={{ x: 0 }}
+                          exit={{ x: 500 }}
+                          key={notify.id}
+                          className="d-flex bg-success-light shadow-1 p-3 rounded-3 justify-content-between">
+                          <div>
+                            <h6>{notify.message}</h6>
+                            <p className="m-0">{notify.data.originalname}</p>
+                          </div>
+                          <div className="d-flex flex-column justify-content-between gap-2" onClick={() => handleRemove(notify.id)}>
+                            <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill">
+                              <i className="fas fa-times"></i>
+                            </button>
+                            <button className="btn btn-success px-3 p-1 rounded-pill">
+                              <i className="fas fa-check"></i>
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    case "warning":
+                      //create csvHeaders
+                      const csvHeaders = [
+                        { label: "name", key: "name" },
+                        { label: "email", key: "email" },
+                        { label: "dob", key: "dob" },
+                      ];
+                      return (
+                        <motion.div
+                          initial={{ x: 0 }}
+                          transition={{ ease: "easeOut", duration: 0.6 }}
+                          animate={{ x: 0 }}
+                          exit={{ x: 500 }}
+                          key={notify.id}
+                          className="d-flex bg-warning-light shadow-1 p-3 rounded-3 justify-content-between">
+                          <div>
+                            <h6>{notify.message}</h6>
+                            <p className="m-0">{notify.data.originalname}</p>
+                          </div>
+                          <div className="d-flex flex-column justify-content-between gap-2">
+                            <button className="btn btn-white shadow-0 px-3 p-1 rounded-pill" onClick={() => handleRemove(notify.id)}>
+                              <i className="fas fa-times"></i>
+                            </button>
+                            <CSVLink headers={csvHeaders} data={notify.data} filename="failed">
+                              <button className="btn btn-warning px-3 p-1 rounded-pill shadow-0">
+                                <i className="fas fa-angle-down"></i>
+                              </button>
+                            </CSVLink>
+                          </div>
+                        </motion.div>
+                      );
+                  }
+                })
+            ) : (
+              <div className="d-flex shadow-1 p-3 rounded-3 justify-content-between">
+                <h6 className="text-dark">No notifications</h6>
+              </div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
         {notifications.length > 0 && (
           <div className="d-flex justify-content-end mt-3">
-            <button className="btn btn-light shadow-0 rounded-pill px-3 p-1" onClick={() => handleClearAll()}>
+            <button className="btn btn-dark shadow-0 rounded-pill px-3 p-1" onClick={() => handleClearAll()}>
               Clear all
             </button>
           </div>

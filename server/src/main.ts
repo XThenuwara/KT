@@ -16,8 +16,8 @@ async function bootstrap() {
       saveUninitialized: false,
     }),
   );
-  app.useGlobalPipes(new ValidationPipe());
-  await app.listen(3001);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  await app.listen(process.env.PORT || 3001);
 }
 
 bootstrap();

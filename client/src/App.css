@@ -3,6 +3,9 @@
   height: 100px;
   object-fit: contain;
 }
+::-webkit-scrollbar {
+  width: 0;
+}
 
 .MuiToolbar-root {
   display: flex !important;

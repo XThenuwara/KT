@@ -2,8 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  Request,
-  Session,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';

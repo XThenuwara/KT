@@ -1,19 +1,13 @@
 import { Process, Processor } from '@nestjs/bull';
-import * as xlsx from 'node-xlsx';
-import * as fs from 'fs';
-import { NotificationService } from '../notification/notification.service';
-import { socketMsgModelWithData } from '../lib/socketMsg.model';
-import { Student } from '../student/entities/student.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as xlsx from 'node-xlsx';
 import { Repository } from 'typeorm';
-import { CreateStudentDto } from '../student/dto/create-student.dto';
-import {
-  isCorrectHeading,
-  isEmail,
-  isEmptyObj,
-  isStudentCreate,
-} from '../lib/validation';
-import { isDate } from 'class-validator';
+import { socketMsgModelWithData } from '../lib/socketMsg.model';
+import { isCorrectHeading, isStudentCreate } from '../lib/validation';
+import { NotificationService } from '../notification/notification.service';
+import { CreateStudentDto } from '../student/dto/createStudent.dto';
+import { Student } from '../student/entities/student.entity';
 
 @Processor('filehandle')
 export class FilehandleConsumer {

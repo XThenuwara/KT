@@ -8,23 +8,25 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationModule } from './notification/notification.module';
 import { StudentModule } from './student/student.module';
 import { Student } from './student/entities/student.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: 'localhost',
-      port: 3307,
-      username: 'root',
-      password: '',
-      database: 'students',
+      port: parseInt('3307'),
+      username: process.env.DBUSER,
+      password: process.env.DBPASSWORD,
+      database: process.env.DBNAME,
       entities: [Student],
       synchronize: true,
     }),
     BullModule.forRoot({
       redis: {
-        host: 'localhost',
-        port: 6379,
+        host: process.env.REDISHOST,
+        port: parseInt(process.env.REDISPORT),
       },
     }),
 

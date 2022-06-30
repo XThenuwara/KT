@@ -1,10 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index({ fulltext: true })
   @Column()
   name: string;
 
@@ -14,6 +15,7 @@ export class Student {
   @Column()
   dob: Date;
 
+  @Index({ fulltext: true })
   @Column()
   email: string;
 }
